@@ -45,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>アプリに表示・使用するための写真や動画を撮影する目的でリクエストします。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>アプリに表示・使用するための写真や動画をライブラリから選択する目的でリクエストします。</string>
+	<key>UISupportsDocumentBrowser</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>
