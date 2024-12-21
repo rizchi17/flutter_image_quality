@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
@@ -33,31 +34,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String? tempPath;
-  String? imagePath;
-  int? width;
-  int? height;
-  int? byte;
+  String? localStoragePath;
   File? file;
   Image? image;
   int quality = 100;
-
-  void updateData(Uint8List data) {
-    byte = data.length; // B
-    width = img.decodeImage(data)?.width;
-    height = img.decodeImage(data)?.height;
-  }
 
   @override
   void initState() {
     super.initState();
     Future(() async {
       final Directory tempDir = await getApplicationDocumentsDirectory();
-      tempPath = '${tempDir.path}/test.jpg';
-      if (File(tempPath!).existsSync()) {
-        file = File(tempPath!);
-        final Uint8List data = await file!.readAsBytes();
-        updateData(data);
+      localStoragePath = tempDir.path;
+      if (File('$localStoragePath/original.jpg').existsSync()) {
+        file = File('$localStoragePath/original.jpg');
       }
       setState(() {});
     });
@@ -76,13 +65,9 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text('width:$width'),
-            Text('height:$height'),
-            Text('byte:$byte'),
-            Text('quality:$quality'),
-            (tempPath != null && File(tempPath!).existsSync())
+            (File('$localStoragePath/original.jpg').existsSync())
                 ? Image.file(
-                    File(tempPath!),
+                    File('$localStoragePath/original.jpg'),
                   )
                 : const Icon(Icons.no_photography),
             ElevatedButton(
@@ -92,10 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   quality = 100;
                   file = File(image.path);
                   final Uint8List data = await file!.readAsBytes();
-                  await File(tempPath!).writeAsBytes(data);
-                  setState(() {
-                    updateData(data);
-                  });
+                  await File('$localStoragePath/original${extension(image.path)}').writeAsBytes(data);
                 }
               },
               child: const Text('pick image'),
@@ -103,14 +85,18 @@ class _MyHomePageState extends State<MyHomePage> {
             ElevatedButton(
               onPressed: () async {
                 if (file != null) {
+                  late Uint8List compressedData;
                   quality -= 10;
                   final Uint8List data = file!.readAsBytesSync();
                   final img.Image? image = img.decodeImage(data);
-                  final Uint8List compressedData = img.encodeJpg(image!, quality: quality);
-                  file = await File(tempPath!).writeAsBytes(compressedData);
-                  setState(() {
-                    updateData(compressedData);
-                  });
+                  if (extension(file!.path) == '.png') {
+                    compressedData = img.encodePng(image!, level: 9);
+                  } else if (extension(file!.path) == '.jpg') {
+                    compressedData = img.encodeJpg(image!, quality: quality);
+                  } else {
+                    return;
+                  }
+                  file = await File('$localStoragePath/encode${extension(file!.path)}').writeAsBytes(compressedData);
                 }
               },
               child: const Text('encode: quality down'),
@@ -124,10 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     quality: quality,
                   );
                   if (compressedData != null) {
-                    file = await File(tempPath!).writeAsBytes(compressedData);
-                    setState(() {
-                      updateData(compressedData);
-                    });
+                    file = await File('$localStoragePath/flutter_image_compress${extension(file!.path)}').writeAsBytes(compressedData);
                   }
                 }
               },
